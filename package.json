@@ -18,7 +18,8 @@
   "dependencies": {
     "moment": "*",
     "node-schedule": "1.0.0",
-    "sleep": "*"
+    "sleep": "*",
+    "forever":"*"
   },
   "preferGlobal": true,
   "private": true,
