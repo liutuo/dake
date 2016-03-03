@@ -4,11 +4,17 @@ var schedule = require('node-schedule');
 var moment = require('moment');
 var sleep = require('sleep');
 
+var args = process.argv.slice(2);
+if (args.length != 2) {
+    console.log("Usage:\n   node dake.js [userId] [password]");
+    process.exit(0);
+}
+
 var data = querystring.stringify({
   dakoku: 'syussya',
   timezone: 480,
-  user_id: 'S146',
-  password: '3533335qaz',
+  user_id: args[0],
+  password: args[1],
 });
 
 var options = {
@@ -60,4 +66,4 @@ var schdeuledJob = schedule.scheduleJob(rule, function(){
     getCurrentTime();
     sendRequest();
 });
-console.log("Dake Job Scheduled!!");
+console.log("Dake Job Scheduled for " + args[0] + "!!");

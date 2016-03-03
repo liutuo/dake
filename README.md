@@ -1,2 +1,2 @@
 npm instal
-node dake.js
+node dake.js [userId] [password]
