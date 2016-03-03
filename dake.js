@@ -1,6 +1,7 @@
 var querystring = require('querystring');
 var https = require('https');
 var schedule = require('node-schedule');
+var moment = require('moment');
 
 var data = querystring.stringify({
   dakoku: 'syussya',
@@ -35,6 +36,12 @@ var sendRequest = function() {
     req.end();
 }
 
+var getCurrentTime = function() {
+    var now = moment()
+    var formatted = now.format('YYYY-MM-DD HH:mm:ss Z')
+    console.log(formatted)
+}
+
 
 
 var rule = new schedule.RecurrenceRule();
@@ -43,6 +50,8 @@ rule.dayOfWeek = [new schedule.Range(1, 5)];
 rule.hour = 10;
 
 var schdeuledJob = schedule.scheduleJob(rule, function(){
-  console.log('Today is recognized by Rebecca Black!');
+  console.log('Today you are protected by the Dake.js');
+  getCurrentTime();
   sendRequest();
 });
+console.log("Dake Job Scheduled!!");

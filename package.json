@@ -1,0 +1,27 @@
+{
+  "name": "wap-dake",
+  "version": "1.0.0",
+  "description": "Dake God Protects You",
+  "main": "dake.js",
+  "repository": {
+  "type": "git",
+  "url": "https://LiuTuoArC@bitbucket.org/leftarm/yet-another-repository.git"
+},
+  "bugs": {
+  "url": "https://github.com/nodejitsu/browsenpm.org/issues"
+},
+  "keywords": [
+  "nodejitsu",
+  "example",
+  "browsenpm"
+],
+  "dependencies": {
+    "moment": "*",
+    "node-schedule": "1.0.0"
+  },
+  "preferGlobal": true,
+  "private": true,
+  "publishConfig": {
+  "registry": "https://your-private-hosted-npm.registry.nodejitsu.com"
+}
+}
