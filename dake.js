@@ -1,5 +1,6 @@
 var querystring = require('querystring');
 var https = require('https');
+var schedule = require('node-schedule');
 
 var data = querystring.stringify({
   dakoku: 'syussya',
@@ -29,6 +30,19 @@ var req = https.request(options, function(res) {
     }
 
 });
+var sendRequest = function() {
+    req.write(data);
+    req.end();
+}
 
-req.write(data);
-req.end();
+
+
+var rule = new schedule.RecurrenceRule();
+//every monday to friday
+rule.dayOfWeek = [new schedule.Range(1, 5)];
+rule.hour = 10;
+
+var schdeuledJob = schedule.scheduleJob(rule, function(){
+  console.log('Today is recognized by Rebecca Black!');
+  sendRequest();
+});
