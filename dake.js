@@ -58,8 +58,8 @@ var randomOffset = function () {
 var rule = new schedule.RecurrenceRule();
 //every monday to friday
 rule.dayOfWeek = [new schedule.Range(1, 5)];
-rule.hour = 14;
-rule.minute = 38;
+rule.hour = 10;
+rule.minute = 0;
 
 var schdeuledJob = schedule.scheduleJob(rule, function () {
     sleep.sleep(randomOffset())
