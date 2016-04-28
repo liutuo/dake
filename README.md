@@ -1,5 +1,9 @@
+```sh
 npm install
-./node_modules/forever/bin/forever start dake.js [userId] [password] &
+./node_modules/forever/bin/forever start dake.js [userId] [password]
+```
 
 For Example:
-    ./node_modules/forever/bin/forever start dake.js S146 3533335qaz &
+```sh
+./node_modules/forever/bin/forever start dake.js S146 3533335qaz
+```
