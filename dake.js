@@ -1,103 +1,126 @@
 var querystring = require('querystring');
-var https = require('https');
-var schedule = require('node-schedule');
-var moment = require('moment');
-var sleep = require('sleep');
+var https       = require('https');
+var schedule    = require('node-schedule');
+var moment      = require('moment');
+var sleep       = require('sleep');
+var getopt      = require('node-getopt');
 
-var args = process.argv.slice(2);
-if (args.length != 2) {
-    console.log("Usage:\n   node dake.js [userId] [password]");
-    process.exit(0);
+
+var parameters = getopt.create([
+      ['u', 'username=[ARG]', 'username, required argument'],
+      ['p', 'password=[ARG]', 'password, required argument'],
+      ['t', 'testing', 'testing mode, no actual request is sent'],
+      ['h', 'help', 'show help message']
+]).bindHelp();
+
+var operations = {
+   SIGN_IN: 'syussya',
+   SIGN_OUT: 'taisya'
+};
+
+var fixedHolidays = {
+   '01-01': 'new year',
+   '05-01': 'labour day',
+   '08-09': 'national day',
+   '12-25': 'christmas'
+};
+
+// core method, send a https request to check-in.
+function sendRequest(args, operation, callback) {
+   var body = querystring.stringify({
+      dakoku: operation,
+      timezone: 480,
+      user_id: args['username'],
+      password: args['password']
+   });
+   var option = {
+      hostname: 'ckip.worksap.co.jp',
+      port:     443,
+      path:     '/cws/cws/srwtimerec',
+      method:   'POST',
+      headers:  {
+         'Origin':      'https://ckip.worksap.co.jp',
+         'Host':        'ckip.worksap.co.jp',
+         'Referer':     'https://ckip.worskap.co.jp/cws/cws/srwtimerec',
+         'Content-Type': 'application/x-www-form-urlencoded',
+         'Content-Length': Buffer.byteLength(body)
+      }
+   };
+         
+   if (args['testing']) {
+      console.info('Testing mode: print out http request instead of sending.');
+      console.info(option);
+      console.info(body);
+   } else {
+      var request = https.request(option, callback);
+      request.write(body);
+      request.end();
+   }
 }
 
-var operation = {
-    SIGN_IN: "syussya",
-    SIGN_OUT: "taisya"
-};
+// print out some logs according to the http response.
+function responseCallback(message) {
+   return function(res) {
+      var dateTime = moment().format('YYYY-MM-DD HH:mm:ss');
+      if (res.statusCode == 200) {
+         console.log(dateTime + ' | Response Code 200: ' + message);
+         console.log(dateTime + " | You're again protected by Dake.js today.");
+      } else {
+         console.log(dateTime + ' | Response Code ' + res.statusCode + ': ' + res.statusMessage);
+         console.log(dateTime + " | Sorry, you're out of luck today.");
+      }
+   };
+}
 
-var createStringData = function(opVal) {
-    var data = {
-        dakoku: opVal,
-        timezone: 480,
-        user_id: args[0],
-        password: args[1]
-    };
-    return querystring.stringify(data);
-};
+// helper function: check if today is holiday, can only detect fixed holiday currently.
+function checkHoliday(dateTime) {
+   var dateString = dateTime.format('MM-DD');
+   var day = fixedHolidays[dateString];
+   if (day) {
+      console.log(dateTime.format('YYYY-MM-DD HH:mm:ss') + ' | Today is ' + day + ', have a nice day');
+      return true;
+   }
+   return false;
+}
 
-var createOptions = function(submitData) {
-    return {
-        hostname: 'ckip.worksap.co.jp',
-        port: 443,
-        path: '/cws/cws/srwtimerec',
-        method: 'POST',
-        headers: {
-            'Origin': 'https://ckip.worksap.co.jp',
-            'Host': 'ckip.worksap.co.jp',
-            'Referer': 'https://ckip.worksap.co.jp/cws/cws/srwtimerec',
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': Buffer.byteLength(submitData)
-        }
-    };
-};
+// helper function: return a random number of seconds.
+function randomSeconds(args) {
+   if (args['testing']) {
+      return 1;
+   }
+   return Math.round(Math.random() * 10 * 60);
+}
 
-var sendRequest = function (options, data, logContent) {
-    var req = https.request(options, function (res) {
-        res.setEncoding('utf8');
-        if (res.statusCode == 200) {
-            console.log(logContent);
-        }
-    });
-    req.write(data);
-    req.end();
-};
+// parsing arguments.
+var opts = parameters.parseSystem();
+var args = opts.options;
 
-var printCurrentTime = function () {
-    var now = moment()
-    var formatted = now.format('YYYY-MM-DD HH:mm:ss Z')
-    console.log(formatted)
-};
+// recognize the first two unnamed args as username and password.
+if (opts.argv.length == 2) {
+   args['username'] = opts.argv[0];
+   args['password'] = opts.argv[1];
+}
 
-// 0 - 10 minutes random offset
-var randomOffset = function () {
-    return Math.round(Math.random() * 10 * 60);
-};
+// exit if required args are not provided.
+if (!args['username'] || !args['password']) {
+   parameters.showHelp();
+   process.exit(0);
+}
 
-var createWeekdayRule = function(hour, min) {
-    //every monday to friday
-    var weekdayRange = new schedule.Range(1, 5);
-    var rule = new schedule.RecurrenceRule();
-    rule.dayOfWeek = [weekdayRange];
-    rule.hour = hour;
-    rule.minute = min;
-    return rule;
-};
+// schedule check-in on Monday to Friday 1000.
+schedule.scheduleJob('0 0 10 * * 1-5', function() {
+   if (!checkHoliday(moment())) {
+      sleep.sleep(randomSeconds(args));
+      sendRequest(args, operations.SIGN_IN, responseCallback('出社打刻成功'));
+   }
+});
 
-var scheduledJobCallback = function(sendRequestCallback) {
-    sleep.sleep(randomOffset());
-    console.log('Today you are protected by the Dake.js');
-    printCurrentTime();
-    sendRequestCallback();
-};
+// schedule check-out on Monday to Friday 1930.
+schedule.scheduleJob('0 30 19 * * 1-5', function() {
+   if (!checkHolday(moment())) {
+      sleep.sleep(randomSeconds(args));
+      sendRequest(args, operations.SIGN_OUT, responseCallback('退社打刻成功'));
+   }
+});
 
-var scheduledSignInCallback = function() {
-    scheduledJobCallback(function() {
-        var signInData = createStringData(operation.SIGN_IN);
-        var signInOptions = createOptions(signInData);
-        sendRequest(signInOptions, signInData, "出社打刻成功");
-    });
-};
-
-var scheduledSignOutCallback = function() {
-    scheduledJobCallback(function() {
-        var signOutData = createStringData(operation.SIGN_OUT);
-        var signOutOptions = createOptions(signOutData);
-        sendRequest(signOutOptions, signOutData, "退社打刻成功");
-    });
-};
-
-var signInRule = createWeekdayRule(10, 00);
-var signOutRule = createWeekdayRule(19, 30);
-var signInJob = schedule.scheduleJob(signInRule, scheduledSignInCallback);
-var signOutJob = schedule.scheduleJob(signOutRule, scheduledSignOutCallback);
-console.log("Dake Job Scheduled for " + args[0] + "!!");
+console.log("Dake job scheduled for " + args['username'] + '!!');
