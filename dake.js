@@ -14,7 +14,7 @@ var parameters = getopt.create([
 ]).bindHelp();
 
 var operations = {
-   SIGN_IN: 'syussya',
+   SIGN_IN:  'syussya',
    SIGN_OUT: 'taisya'
 };
 
@@ -73,7 +73,7 @@ function responseCallback(message) {
 }
 
 // helper function: check if today is holiday, can only detect fixed holiday currently.
-function checkHoliday(dateTime) {
+function checkHolidays(dateTime) {
    var dateString = dateTime.format('MM-DD');
    var day = fixedHolidays[dateString];
    if (day) {
@@ -109,7 +109,7 @@ if (!args['username'] || !args['password']) {
 
 // schedule check-in on Monday to Friday 1000.
 schedule.scheduleJob('0 0 10 * * 1-5', function() {
-   if (!checkHoliday(moment())) {
+   if (!checkHolidays(moment())) {
       sleep.sleep(randomSeconds(args));
       sendRequest(args, operations.SIGN_IN, responseCallback('出社打刻成功'));
    }
@@ -117,7 +117,7 @@ schedule.scheduleJob('0 0 10 * * 1-5', function() {
 
 // schedule check-out on Monday to Friday 1930.
 schedule.scheduleJob('0 30 19 * * 1-5', function() {
-   if (!checkHolday(moment())) {
+   if (!checkHolidays(moment())) {
       sleep.sleep(randomSeconds(args));
       sendRequest(args, operations.SIGN_OUT, responseCallback('退社打刻成功'));
    }
