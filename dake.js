@@ -4,7 +4,8 @@ var schedule    = require('node-schedule');
 var moment      = require('moment');
 var sleep       = require('sleep');
 var getopt      = require('node-getopt');
-
+var ical        = require('ical');
+var holidays = {};
 
 var parameters = getopt.create([
       ['u', 'username=[ARG]', 'username, required argument'],
@@ -13,17 +14,26 @@ var parameters = getopt.create([
       ['h', 'help', 'show help message']
 ]).bindHelp();
 
+var getPublicHoliday = function(fileName) {
+      var holidayIcs2016 = ical.parseFile(fileName);
+      // console.log(holidayIcs2016);
+      for (var k in holidayIcs2016) {
+          var holiday = moment(holidayIcs2016[k].start)
+          holidays[holiday.format('YYYY-MM-DD')] = holidayIcs2016[k].summary;
+      }
+      
+}
+
+// read public holiday file from http://www.mom.gov.sg/employment-practices/public-holidays
+// currently support until 2017
+getPublicHoliday("public-holidays-sg-2016.ics");
+getPublicHoliday("public-holidays-sg-2017.ics");
+
 var operations = {
    SIGN_IN:  'syussya',
    SIGN_OUT: 'taisya'
 };
 
-var fixedHolidays = {
-   '01-01': 'new year',
-   '05-01': 'labour day',
-   '08-09': 'national day',
-   '12-25': 'christmas'
-};
 
 // core method, send a https request to check-in.
 function sendRequest(args, operation, callback) {
@@ -74,8 +84,8 @@ function responseCallback(message) {
 
 // helper function: check if today is holiday, can only detect fixed holiday currently.
 function checkHolidays(dateTime) {
-   var dateString = dateTime.format('MM-DD');
-   var day = fixedHolidays[dateString];
+   var dateString = dateTime.format('YYYY-MM-DD');
+   var day = holidays[dateString];
    if (day) {
       console.log(dateTime.format('YYYY-MM-DD HH:mm:ss') + ' | Today is ' + day + ', have a nice day');
       return true;

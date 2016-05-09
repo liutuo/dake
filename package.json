@@ -20,7 +20,8 @@
     "node-schedule": "1.0.0",
     "node-getopt": "0.2.3",
     "sleep": "*",
-    "forever":"*"
+    "forever":"*",
+    "ical":"*"
   },
   "preferGlobal": true,
   "private": true,
