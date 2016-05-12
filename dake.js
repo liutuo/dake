@@ -22,6 +22,16 @@ var operations = {
 var HOLIDAY_DIR = 'holidays/';
 var HOLIDAY_DOWNLOAD_BASE_URL = 'http://www.mom.gov.sg/employment-practices/public-holidays/';
 
+function isTestingMode() {
+    if (args === undefined) {
+        return false;
+    } else if (args['testing']) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 // core method, send a https request to check-in.
 function sendRequest(args, operation, callback) {
     var body = querystring.stringify({
@@ -44,7 +54,7 @@ function sendRequest(args, operation, callback) {
         }
     };
 
-    if (args['testing']) {
+    if (isTestingMode()) {
         console.info('Testing mode: print out http request instead of sending.');
         console.info(option);
         console.info(body);
@@ -80,7 +90,7 @@ function loadPublicHoliday(file) {
         process.exit(0);
     }
 
-    if (args['testing']) {
+    if (isTestingMode()) {
         console.log(holidayIcs);
     }
 
@@ -109,7 +119,7 @@ function checkHolidays(dateTime) {
 
 // helper function: return a random number of seconds.
 function randomSeconds(args) {
-    if (args['testing']) {
+    if (isTestingMode()) {
         return 1;
     }
     return Math.round(Math.random() * 10 * 60);
