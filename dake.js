@@ -5,7 +5,7 @@ var moment = require('moment');
 var sleep = require('sleep');
 var getopt = require('node-getopt');
 var ical = require('ical');
-var holidays = {};
+var holidays = { "2016-05-23":"Vesak Day"};
 
 var parameters = getopt.create([
     ['u', 'username=[ARG]', 'username, required argument'],
