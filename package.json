@@ -21,7 +21,8 @@
     "node-getopt": "0.2.3",
     "sleep": "*",
     "forever":"*",
-    "ical":"*"
+    "ical":"*",
+    "requestretry":"1.8.0"
   },
   "preferGlobal": true,
   "private": true,
