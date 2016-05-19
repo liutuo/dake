@@ -1,5 +1,5 @@
 var querystring = require('querystring');
-var https = require('https');
+var request = require('requestretry');
 var schedule = require('node-schedule');
 var moment = require('moment');
 var sleep = require('sleep');
@@ -14,6 +14,14 @@ var parameters = getopt.create([
     ['h', 'help', 'show help message']
 ]).bindHelp();
 
+// modify the parameters to customize the time to sign in or sign out
+var timeOptions = {
+    SIGN_IN_TIME: '0 15 10 * * 1-5',
+    SIGN_OUT_TIME: '0 30 19 * * 1-5',
+    WAIT_RANGE: 15, // 15 minutes
+    RETRY_DELAY: 3 * 60 * 1000 // 3 minutes
+};
+
 var operations = {
     SIGN_IN: 'syussya',
     SIGN_OUT: 'taisya'
@@ -22,49 +30,50 @@ var operations = {
 var HOLIDAY_DIR = 'holidays/';
 var HOLIDAY_DOWNLOAD_BASE_URL = 'http://www.mom.gov.sg/employment-practices/public-holidays/';
 
+function isTestingMode() {
+    if (args === undefined) {
+        return false;
+    } else if (args['testing']) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 // core method, send a https request to check-in.
-function sendRequest(args, operation, callback) {
+function sendRequest(operation, callback) {
     var body = querystring.stringify({
         dakoku: operation,
         timezone: 480,
         user_id: args['username'],
         password: args['password']
     });
-    var option = {
-        hostname: 'ckip.worksap.co.jp',
-        port: 443,
-        path: '/cws/cws/srwtimerec',
-        method: 'POST',
-        headers: {
-            'Origin': 'https://ckip.worksap.co.jp',
-            'Host': 'ckip.worksap.co.jp',
-            'Referer': 'https://ckip.worskap.co.jp/cws/cws/srwtimerec',
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': Buffer.byteLength(body)
-        }
-    };
 
-    if (args['testing']) {
+    if (isTestingMode()) {
         console.info('Testing mode: print out http request instead of sending.');
         console.info(option);
         console.info(body);
     } else {
-        var request = https.request(option, callback);
-        request.write(body);
-        request.end();
+        request.post({
+            url: 'https://ckip.worksap.co.jp/cws/cws/srwtimerec',
+            port: 443,
+            form: body,
+            maxAttempts: 3,
+            retryDelay: timeOptions.RETRY_DELAY
+        }, callback);
     }
 }
 
 // print out some logs according to the http response.
 function responseCallback(message) {
-    return function (res) {
+    return function (err, res, body) {
         var dateTime = moment().format('YYYY-MM-DD HH:mm:ss');
         if (res.statusCode == 200) {
             console.log(dateTime + ' | Response Code 200: ' + message);
             console.log(dateTime + " | You're again protected by Dake.js today.");
         } else {
             console.log(dateTime + ' | Response Code ' + res.statusCode + ': ' + res.statusMessage);
-            console.log(dateTime + " | Sorry, you're out of luck today.");
+            console.log('Number of request attempts: ' + res.attempts);
         }
     };
 }
@@ -80,7 +89,7 @@ function loadPublicHoliday(file) {
         process.exit(0);
     }
 
-    if (args['testing']) {
+    if (isTestingMode()) {
         console.log(holidayIcs);
     }
 
@@ -108,11 +117,11 @@ function checkHolidays(dateTime) {
 }
 
 // helper function: return a random number of seconds.
-function randomSeconds(args) {
-    if (args['testing']) {
+function randomSeconds() {
+    if (isTestingMode()) {
         return 1;
     }
-    return Math.round(Math.random() * 10 * 60);
+    return Math.round(Math.random() * timeOptions.WAIT_RANGE * 60);
 }
 
 // parsing arguments.
@@ -133,19 +142,17 @@ if (!args['username'] || !args['password']) {
 
 loadPublicHoliday(HOLIDAY_DIR + makeHolidayFileName());
 
-// schedule check-in on Monday to Friday 1000.
-schedule.scheduleJob('0 0 10 * * 1-5', function () {
+schedule.scheduleJob(timeOptions.SIGN_IN_TIME, function () {
     if (!checkHolidays(moment())) {
-        sleep.sleep(randomSeconds(args));
-        sendRequest(args, operations.SIGN_IN, responseCallback('出社打刻成功'));
+        sleep.sleep(randomSeconds());
+        sendRequest(operations.SIGN_IN, responseCallback('出社打刻成功'));
     }
 });
 
-// schedule check-out on Monday to Friday 1930.
-schedule.scheduleJob('0 30 19 * * 1-5', function () {
+schedule.scheduleJob(timeOptions.SIGN_OUT_TIME, function () {
     if (!checkHolidays(moment())) {
-        sleep.sleep(randomSeconds(args));
-        sendRequest(args, operations.SIGN_OUT, responseCallback('退社打刻成功'));
+        sleep.sleep(randomSeconds());
+        sendRequest(operations.SIGN_OUT, responseCallback('退社打刻成功'));
     }
 });
 
