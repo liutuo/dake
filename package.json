@@ -16,7 +16,6 @@
     "moment": "^2.14.1",
     "node-getopt": "^0.2.3",
     "node-schedule": "^1.0.0",
-    "requestretry": "^1.8.0",
-    "sleep": "^3.0.1"
+    "requestretry": "^1.8.0"
   }
 }

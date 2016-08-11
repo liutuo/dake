@@ -1,11 +1,11 @@
+var path = require('path');
 var querystring = require('querystring');
 var request = require('requestretry');
 var schedule = require('node-schedule');
 var moment = require('moment');
-var sleep = require('sleep');
 var getopt = require('node-getopt');
 var ical = require('ical');
-var holidays = { "2016-05-23":"Vesak Day"};
+var holidays = {"2016-05-23":"Vesak Day"};
 
 var parameters = getopt.create([
     ['u', 'username=[ARG]', 'username, required argument'],
@@ -27,7 +27,7 @@ var operations = {
     SIGN_OUT: 'taisya'
 };
 
-var HOLIDAY_DIR = 'holidays/';
+var HOLIDAY_DIR = path.resolve(__dirname, 'holidays');
 var HOLIDAY_DOWNLOAD_BASE_URL = 'http://www.mom.gov.sg/employment-practices/public-holidays/';
 
 function isTestingMode() {
@@ -51,8 +51,8 @@ function sendRequest(operation, callback) {
 
     if (isTestingMode()) {
         console.info('Testing mode: print out http request instead of sending.');
-        console.info(option);
-        console.info(body);
+        console.info('Operation: ' + operation);
+        console.info('Request body:\n' + body);
     } else {
         request.post({
             url: 'https://ckip.worksap.co.jp/cws/cws/srwtimerec',
@@ -78,11 +78,11 @@ function responseCallback(message) {
     };
 }
 
-function loadPublicHoliday(file) {
+function loadPublicHoliday(filePath) {
     var holidayIcs = {};
     try {
-        console.log('Loading holiday file: ' + file);
-        holidayIcs = ical.parseFile(file);
+        console.log('Loading holiday file: ' + filePath);
+        holidayIcs = ical.parseFile(filePath);
     } catch (err) {
         console.error('Event file for public holidays in the year of ' + currentYear + ' cannot be found.');
         console.error('Please download it from ' + HOLIDAY_DOWNLOAD_BASE_URL);
@@ -121,7 +121,7 @@ function randomSeconds() {
     if (isTestingMode()) {
         return 1;
     }
-    return Math.round(Math.random() * timeOptions.WAIT_RANGE * 60);
+    return Math.round(Math.random() * timeOptions.WAIT_RANGE * 1000 * 60);
 }
 
 // parsing arguments.
@@ -140,19 +140,21 @@ if (!args['username'] || !args['password']) {
     process.exit(0);
 }
 
-loadPublicHoliday(HOLIDAY_DIR + makeHolidayFileName());
+loadPublicHoliday(path.resolve(HOLIDAY_DIR, makeHolidayFileName()));
 
 schedule.scheduleJob(timeOptions.SIGN_IN_TIME, function () {
     if (!checkHolidays(moment())) {
-        sleep.sleep(randomSeconds());
-        sendRequest(operations.SIGN_IN, responseCallback('出社打刻成功'));
+	setTimeout(function() {
+            sendRequest(operations.SIGN_IN, responseCallback('出社打刻成功'));
+        }, randomSeconds());
     }
 });
 
 schedule.scheduleJob(timeOptions.SIGN_OUT_TIME, function () {
     if (!checkHolidays(moment())) {
-        sleep.sleep(randomSeconds());
-        sendRequest(operations.SIGN_OUT, responseCallback('退社打刻成功'));
+	setTimeout(function() {
+            sendRequest(operations.SIGN_OUT, responseCallback('退社打刻成功'));
+        }, randomSeconds());
     }
 });
 

@@ -3,6 +3,8 @@ DaKe script for Works Application
 
 Developed by magic core team.
 
+### Execution
+
 ```sh
 npm install
 ./node_modules/forever/bin/forever start dake.js [userId] [password]
@@ -12,3 +14,7 @@ For Example:
 ```sh
 ./node_modules/forever/bin/forever start dake.js S146 3533335qaz
 ```
+
+### TODO
+
+* Upgrade source code to ES6
