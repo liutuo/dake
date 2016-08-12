@@ -5,7 +5,7 @@ var schedule = require('node-schedule');
 var moment = require('moment');
 var getopt = require('node-getopt');
 var ical = require('ical');
-var holidays = {"2016-05-23":"Vesak Day"};
+var holidays = {};
 
 var parameters = getopt.create([
     ['u', 'username=[ARG]', 'username, required argument'],
@@ -18,7 +18,7 @@ var parameters = getopt.create([
 var timeOptions = {
     SIGN_IN_TIME: '0 15 10 * * 1-5',
     SIGN_OUT_TIME: '0 30 19 * * 1-5',
-    WAIT_RANGE: 15, // 15 minutes
+    WAIT_RANGE: 15 * 60 * 1000, // 15 minutes
     RETRY_DELAY: 3 * 60 * 1000 // 3 minutes
 };
 
@@ -117,11 +117,11 @@ function checkHolidays(dateTime) {
 }
 
 // helper function: return a random number of seconds.
-function randomSeconds() {
+function randomMillis() {
     if (isTestingMode()) {
         return 1;
     }
-    return Math.round(Math.random() * timeOptions.WAIT_RANGE * 1000 * 60);
+    return Math.round(Math.random() * timeOptions.WAIT_RANGE);
 }
 
 // parsing arguments.
@@ -146,7 +146,7 @@ schedule.scheduleJob(timeOptions.SIGN_IN_TIME, function () {
     if (!checkHolidays(moment())) {
 	setTimeout(function() {
             sendRequest(operations.SIGN_IN, responseCallback('出社打刻成功'));
-        }, randomSeconds());
+        }, randomMillis());
     }
 });
 
@@ -154,7 +154,7 @@ schedule.scheduleJob(timeOptions.SIGN_OUT_TIME, function () {
     if (!checkHolidays(moment())) {
 	setTimeout(function() {
             sendRequest(operations.SIGN_OUT, responseCallback('退社打刻成功'));
-        }, randomSeconds());
+        }, randomMillis());
     }
 });
 

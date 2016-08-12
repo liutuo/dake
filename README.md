@@ -1,7 +1,5 @@
-DaKe script for Works Application
+DaKe script
 ===
-
-Developed by magic core team.
 
 ### Execution
 
