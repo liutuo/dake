@@ -5,7 +5,7 @@
   "main": "dake.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/swwl1992/dake.git"
+    "url": "git@github.com:liutuo/dake.git"
   },
   "keywords": [
     "dake"

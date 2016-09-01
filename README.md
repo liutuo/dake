@@ -12,7 +12,3 @@ For Example:
 ```sh
 ./node_modules/forever/bin/forever start dake.js S146 3533335qaz
 ```
-
-### TODO
-
-* Upgrade source code to ES6
