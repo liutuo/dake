@@ -2,13 +2,16 @@ DaKe script
 ===
 
 ## Installation
-npm install pm2@latest -g
+sudo npm install pm2@latest -g
 npm install 
 
 ## Execution
 pm2 start dake.js -- [username] [password]
 
-sudo pm2 startup
+pm2 save
+
+pm2 startup
+-> run the prompted command
 
 ## Check Status
 pm2 list
