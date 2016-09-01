@@ -1,14 +1,11 @@
 DaKe script
 ===
 
+## Installation
+npm install pm2@latest -g
+npm install 
+
 ### Execution
+pm2 start dake.js --node-args="[username] [password]"
 
-```sh
-npm install
-./node_modules/forever/bin/forever start dake.js [userId] [password]
-```
-
-For Example:
-```sh
-./node_modules/forever/bin/forever start dake.js S146 3533335qaz
-```
+sudo pm2 startup
